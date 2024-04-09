@@ -1,0 +1,76 @@
+Slip 13-Customer-Account
+
+create table customer1(cno int primary key,cname varchar(20),city varchar(20));
+
+create table account1(accno int primary key,acc_type varchar(20),opening_date date,balance money,cno int references customer11);
+
+insert into customer1 values(101,'om','shrirampur');
+insert into customer1 values(102,'sai','shrirampur');
+insert into customer1 values(103,'ram','shirdi');
+
+insert into account1 values(10,'saving','2020-12-10','4000',101);
+insert into account1 values(20,'saving','2021-05-18','6000',102);
+insert into account1 values(30,'current','2020-10-19','9000',101);
+insert into account1 values(40,'current ','2019-03-18','2000',102);
+insert into account1 values(50,'saving','2023-01-30','8000',103);
+
+select*from account1;
+select*from customer1;
+
+A)Write a function to accept account type as input and give the maximum account balance of that type.
+
+create or replace function EL(type account1.acc_type%type)returns money as
+$$
+declare
+m1 money;
+begin
+select max(balance)into m1 from account1 where acc_type=type;
+return m1;
+end;
+$$
+language plpgsql;
+
+select EL('saving');
+
+B)Write a cursor to display account details of all customers of 'shrirampur'city.
+
+create or replace function RIO()returns void as
+$$
+declare
+ c account1%rowtype;
+ c1 cursor for select*from account1,customer1 where customer1.cno=account1.cno and city='shrirampur';
+begin
+ open c1;
+ loop
+  fetch c1 into c;
+  exit when not found;
+ raise notice'Account no=%',c.accno;
+ raise notice'Account type=%',c.acc_type;
+ raise notice'Opening date=%',c.opening_date;
+ raise notice'Balance=%',c.balance;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select RIO();
+
+C)Write a trigger before inserting an account record in Acoount table and raise exception if balance is<500.
+
+create or replace function jadu()returns trigger as
+$$
+declare
+begin
+if(new.balance<'500')then
+raise exception'balance less than 500 not allowed..!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t1
+before insert on account1
+for each row
+execute procedure jadu();

@@ -1,0 +1,67 @@
+Slip 19-Person-Area
+create table area(aid int primary key,aname varchar(30),area_type varchar(20) check(area_type in('urban','rural')));
+insert into area values(101,'pune','urban');
+insert into area values(102,'shrirampur','rural');
+insert into area values(103,'mumbai','rural');
+insert into area values(104,'nashik','urban');
+
+create table person(pno int primary key,pname varchar(20),birthdate date,income money,aid int references area);
+insert into person values(1,'om','2000-10-15','30000',101);
+insert into person values(2,'sai','2004-12-15','40000',102);
+insert into person values(3,'ram','2014-05-23','50000',102);
+insert into person values(4,'sham','2018-05-16','44000',103);
+insert into person values(5,'mayur','2005-06-22','100000',104);
+insert into person values(6,'nikhil','2000-08-02','100000',104);
+
+select*from area;
+select*from person;
+
+A)Write a stored function to update the income of all persons living in rural area by 10%;  
+create or replace function shana()returns void as
+$$
+declare
+begin
+update person set income=income+income*10/100 from area where area.aid=person.aid and area_type='rural';
+raise notice'Updated successfully';
+end;
+$$
+language plpgsql;
+
+select shana();
+
+B)Write a trigger before deleting a person's record from the person's table.Raise a notice and display the message'Person record is being deleted'.
+
+create or replace function disp_msg()returns trigger as
+$$
+declare
+begin
+raise notice'Person record is being deleted';
+return old;
+end;
+$$
+language plpgsql;
+
+create trigger t1
+before delete on person
+for each row
+execute procedure disp_msg();
+
+C)Write a cursor to display the names of persons living in urban area.
+create or replace function disp_per()returns void as
+$$
+declare
+p1 person.pname%type;
+c1 cursor for select pname from person,area where area.aid=person.aid and area_type='urban';
+begin
+open c1;
+  loop
+  fetch c1 into p1;
+  exit when not found;
+ raise notice'%',p1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select disp_per();

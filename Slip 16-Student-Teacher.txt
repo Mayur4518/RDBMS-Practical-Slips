@@ -1,0 +1,81 @@
+Slip 16:Student-Teacher
+create table student(Roll_no int primary key,sname varchar(20),sclass char(10));
+create table teacher(T_no int primary key,tname char(20),experience int);
+create table st(Roll_no int references student,T_no int references teacher,subject varchar(20));
+
+insert into student values(1,'om','fy');
+insert into student values(2,'sai','sy');
+insert into student values(3,'ram','fy');
+insert into student values(4,'sham','ty');
+insert into student values(0,'aman','ty');
+
+insert into teacher values(101,'Mr.bothe',15);
+insert into teacher values(102,'Mr.devekar',10);
+insert into teacher values(103,'Mrs.Pawar',7);
+insert into teacher values(104,'Mrs.patare',5);
+
+insert into st values(1,101,'C Advance');
+insert into st values(1,102,'English');
+insert into st values(2,103,'RDBMS');
+insert into st values(2,104,'HTML');
+insert into st values(3,102,'English');
+insert into st values(4,101,'Java');
+
+select*from student;
+select*from teacher;
+select*from st;
+
+A)write a trigger before insert the record of the student in the student table.If the Roll no is less than or equal to zero then the trigger gets fired and display the message'Invalid Roll number'.
+
+create or replace function fire()returns trigger as
+$$
+declare
+begin
+if(new.Roll_no<=0)then
+raise exception'Roll no less than 0 is not allowed..!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t2
+before insert on student
+for each row
+execute procedure fire();
+
+B)Write a cursor to accept the student's name from the user as an input and display names of all teachers teaching that subject.
+
+create or replace function disp_teac(name student.sname%type)returns void as
+$$
+declare
+t1 teacher.tname%type;
+c1 cursor for select tname from teacher,student,st where  student.Roll_no=st.Roll_no and teacher.T_no=st.T_no  and student.sname=name;
+begin
+open c1;
+loop
+ fetch c1 into t1;
+ exit when not found;
+raise notice'Teacher=%',t1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select disp_teac('om');
+
+C)Write a stored function to count the number of teachers having experience>10 years.
+
+create or replace function star()returns int as
+$$
+declare
+cnt int;
+begin
+select count(tname)into cnt from teacher where experience>10;
+return cnt;
+end;
+$$
+language plpgsql;
+
+select star();

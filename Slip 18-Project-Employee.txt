@@ -1,0 +1,82 @@
+Slip 18-Project-Employee
+create table proj18(pno int primary key,pname char(30),ptype char(30),duration int);
+
+create table emp18(empno int primary key,ename char(20),salary float,joining_date date);
+
+create table pe18(pno int references proj18,empno int references emp18,start_date date);
+
+insert into proj18 values(101,'Banking','account',100);
+insert into proj18 values(102,'Addmision','educational',150);
+insert into proj18 values(103,'Medical','health',300);
+insert into proj18 values(104,'Hospital','health',200);
+
+insert into emp18 values(1,'om',3000,'2020-10-12');
+insert into emp18 values(2,'sai',7000,'2022-12-19');
+insert into emp18 values(3,'ram',5000,'2023-04-23');
+insert into emp18 values(4,'sham',9000,'2020-11-12');
+insert into emp18 values(5,'aman',8000,'2019-03-12');
+
+insert into pe18 values(101,1,'2021-08-14');
+insert into pe18 values(104,2,'2021-01-12');
+insert into pe18 values(102,5,'2023-11-22');
+insert into pe18 values(103,4,'2021-12-12');
+insert into pe18 values(104,3,'2022-08-16');
+
+select*from proj18;
+select*from emp18;
+select*from pe18;
+
+A)Write a cursor to accept the employee name as an input parameter and displays the names of projects of that employee.
+
+create or replace function disp_pro(name emp18.ename%type)returns void as
+$$
+declare
+p1 proj18.pname%type;
+c1 cursor for select pname from proj18,emp18,pe18 where proj18.pno=pe18.pno and emp18.empno=pe18.empno and ename=name;
+begin
+open c1;
+ loop
+  fetch c1 into p1;
+  exit when not found;
+ raise notice'Names of Projects=%',p1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select disp_pro('om');
+
+B)Write a stored function to count all employees who have joined before'16-08-2022';
+
+create or replace function disp_cnt()returns int as
+$$
+declare
+cnt int;
+begin
+select count(ename)into cnt from emp18 where joining_date<'2022-08-16';
+return cnt;
+end;
+$$
+language plpgsql;
+
+select disp_cnt();
+
+C)Write a trigger which ensures that if an employee's salary entered less than zero,the trigger gets fired.
+
+create or replace function fired()returns trigger as
+$$
+declare
+begin
+if(new.salary<0)then
+raise exception'Salary less than zero not allowed..!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t1
+after insert on emp18
+for each row
+execute procedure fired();

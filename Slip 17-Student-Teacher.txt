@@ -1,0 +1,82 @@
+Slip 17-Student-Teacher
+create table student17(Roll_no int primary key,sname varchar(20),sclass char(10));
+create table teacher17(T_no int primary key,tname char(20),experience int);
+create table st17(Roll_no int references student,T_no int references teacher,subject varchar(20));
+
+insert into student17 values(1,'om','fy');
+insert into student17 values(2,'sai','sy');
+insert into student17 values(3,'ram','fy');
+insert into student17 values(4,'sham','ty');
+insert into student17 values(0,'aman','ty');
+
+insert into teacher17 values(101,'Mr.bothe',15);
+insert into teacher17 values(102,'Mr.devekar',10);
+insert into teacher17 values(103,'Mrs.Pawar',7);
+insert into teacher17 values(104,'Mrs.patare',5);
+
+insert into st17 values(1,101,'C Advance');
+insert into st17 values(1,102,'English');
+insert into st17 values(2,103,'RDBMS');
+insert into st17 values(2,104,'HTML');
+insert into st17 values(3,102,'English');
+insert into st17 values(4,101,'Java');
+
+select*from student17;
+select*from teacher17;
+select*from st17;
+
+A)Write a trigger before inserting the teacher record into a teacher table.Experience should be a minimum of 4 years.If it is less than 4 years trigger gets fired and displays an appropriate message.
+
+create or replace function king()returns trigger as
+$$
+declare
+begin
+if(new.experience<4)then
+raise exception'experience less tham 4 years not allowed..!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t10
+before insert on teacher17
+for each row
+execute procedure king();
+
+B)Write a cursor to accept the student name from the user as an input and give list of subjects taken by the student.
+
+create or replace function thala(name varchar(20))returns void as
+$$
+declare
+s1 varchar(20);
+c1 cursor for select subject from student17,st17 where student17.Roll_no=st17.Roll_no and sname=name;
+begin
+open c1;
+ loop
+ fetch c1 into s1;
+ exit when not found;
+raise notice'%',s1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select thala('sai');
+
+C)Write a stored function to find the details of the maximum experienced teacher.
+create or replace function MI()returns void as
+$$
+declare
+t1 teacher17%rowtype;
+begin
+select*into t1 from teacher17 where experience=(select max(experience)from teacher17);
+raise notice'Teacher no=%',t1.T_no;
+raise notice'Teacher name=%',t1.tname;
+raise notice'Experience=%',t1.experience;
+end;
+$$
+language plpgsql;
+
+select MI();

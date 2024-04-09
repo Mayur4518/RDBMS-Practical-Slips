@@ -1,0 +1,90 @@
+Slip-15-Item-Supplier
+create table item(itemno int primary key,
+itemname varchar(20));
+
+create table supplier(supplier_no int primary key,
+supplier_name varchar(20),
+city varchar(20));
+
+create table I_s(itemno int
+references item,
+supplier_no int references supplier,
+rate money,quantity int);
+
+insert into item values(101,'keyboard');
+insert into item values(102,'mouse');
+insert into item values(103,'moniter');
+
+insert into supplier values(1,'om','pune');
+insert into supplier values(2,'sai','pune');
+insert into supplier values(3,'ram','shrirampur');
+insert into supplier values(4,'sham','shrirampur');
+insert into supplier values(5,'Manu','nashik');
+
+insert into I_s values(101,1,'350',2);
+insert into I_s values(102,1,'200',3);
+insert into I_s values(101,2,'400',1);
+insert into I_s values(102,2,'250',4);
+insert into I_s values(103,4,'5000',1);
+insert into I_s values(102,3,'300',3);
+insert into I_s values(103,4,'7500',2);
+insert into I_s values(101,5,'400',3);
+
+select*from item;
+select*from supplier;
+select*from l_s;
+
+A)Write a function to accept the city name as input and returns the number of suppliers living in that city.
+
+create or replace function roman(city1 varchar(20))returns int as
+$$
+declare
+s1 int;
+begin
+select count(supplier_no)into s1 from supplier where city=city1;
+return s1;
+end;
+$$
+language plpgsql;
+
+select roman('pune');
+
+B)Write a cursor to display the names of items whose rate is more than 500.
+
+create or replace function jhon()returns void as
+$$
+declare
+i1 varchar(20);
+c1 cursor for select itemname from item,I_s where item.itemno=I_s.itemno and rate>'500';
+begin
+open c1;
+ loop
+  fetch c1 into i1;
+  exit when not found;
+ raise notice'Items names=%',i1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select jhon();
+
+C)Write a trigger before insert or update on rate field.If the rate is less than 50 then raise the appropriate exception.
+
+create or replace function hitman()returns trigger as
+$$
+declare
+begin
+if(new.rate<'50')then
+raise exception'rate less than 50 not allowed..!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t1
+before insert or update on I_s
+for each row
+execute procedure hitman();

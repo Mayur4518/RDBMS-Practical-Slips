@@ -1,0 +1,74 @@
+Slip 14:Department-Employee
+create table department15(dno int primary key,dname varchar(20),city varchar(20));
+create table employee15(eno int primary key,ename varchar(20),salary int,dno int references department15);
+
+insert into department15 values(101,'computer','pune');
+insert into department15 values(102,'account','mumbai');
+insert into department15 values(103,'sales','pune');
+insert into department15 values(104,'production','shrirampur');
+
+insert into employee15 values(1,'om',5000,101);
+insert into employee15 values(2,'sai',4000,101);
+insert into employee15 values(3,'ram',9000,103);
+insert into employee15 values(4,'sham',9000,102);
+insert into employee15 values(5,'dada',8000,104);
+insert into employee15 values(6,'aba',10000,103);
+
+select*from department15;
+select*from employee15;
+
+A)Write a function to accept department name and display the average salary of employees in that department.
+
+create or replace function lucas(dname1 department15.dname%type)returns int as
+$$
+declare
+m1 int;
+begin
+ select avg(salary)into m1 from employee15,department15 where department15.dno=employee15.dno and dname=dname1;
+return m1;
+end;
+$$
+language plpgsql;
+
+select lucas('computer');
+
+B)Write a cursor to display the names of employee who works in 'computer' department.
+
+create or replace function Do() returns text as
+$$
+declare
+d1 text;
+c1 cursor for select ename from employee15,department15 where department15.dno=employee15.dno and dname='computer';
+begin
+open c1;
+loop
+  fetch c1 into d1;
+  exit when not found;
+ raise notice'Emp name=%',d1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select Do();
+
+
+C) Write a trigger before updating an employee record in the employee table.Raise a notice and display the message 'employee record is being updated'.
+
+create or replace function updt()returns trigger as
+$$
+declare
+begin
+raise notice'Employee record is being updated..!';
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t11
+before update on employee15
+for each row
+execute procedure updt();
+ 
+update employee15 set ename='mayur' where ename='aba';

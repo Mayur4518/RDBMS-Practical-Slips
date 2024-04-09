@@ -1,0 +1,75 @@
+Slip 12-Department-Employee
+create table department(dno int primary key,dname varchar(20),city varchar(20));
+create table employee(eno int primary key,ename varchar(20),salary money,dno int references department);
+
+insert into department values(101,'computer','pune');
+insert into department values(102,'account','mumbai');
+insert into department values(103,'sales','pune');
+insert into department values(104,'production','shrirampur');
+
+insert into employee values(1,'om','5000',101);
+insert into employee values(2,'sai','4000',101);
+insert into employee values(3,'ram','9000',103);
+insert into employee values(4,'sham','9000',102);
+insert into employee values(5,'dada','8000',104);
+insert into employee values(6,'aba','10000',103);
+
+select*from department;
+select*from employee;
+
+A)Write a function to accept department city as input and returns the total number of departments in that city.
+
+create or replace function denver(city1 department.city%type)returns int as
+$$
+declare
+  cnt int;
+begin
+ select count(dno)into cnt from department where city=city1;
+return cnt;
+end;
+$$
+language plpgsql;
+
+select denver('mumbai);
+
+B)Write a cursor to display the dapartment-wise name of employees whose salary is between 5000 and 10000.
+
+create or replace function cut()returns void as
+$$
+declare
+ e1 employee.ename%type;
+ c1 cursor for select ename from employee,department where department.dno=employee.dno and salary>='5000'and salary<='10000' order by dname;
+begin
+open c1;
+loop
+ fetch c1 into e1;
+ exit when not found;
+raise notice'name of emp=%',e1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select cut();
+
+C)Write a trigger before inserting an employee record in the employee table.Raise an exception if salary<0.
+create or replace function mosco()returns trigger as
+$$
+declare
+begin
+if(new.salary<'0')then
+raise exception'salary less than 0 is not allowed..!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t1
+after insert on employee
+for each row
+execute procedure mosco();
+
+insert into employee values(7,'prem','-10000',103);
+
