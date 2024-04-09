@@ -1,0 +1,72 @@
+Slip 11-Customer-Account
+create table customer11(cno int primary key,cname varchar(20),city varchar(20));
+
+create table account11(accno int primary key,acc_type varchar(20),opening_date date,balance money,cno int references customer11);
+
+insert into customer11 values(101,'om','shrirampur');
+insert into customer11 values(102,'sai','shrirampur');
+insert into customer11 values(103,'ram','shirdi');
+
+insert into account11 values(10,'saving','2020-12-10','4000',101);
+insert into account11 values(20,'saving','2021-05-18','6000',102);
+insert into account11 values(30,'current','2020-10-19','9000',101);
+insert into account11 values(40,'current ','2019-03-18','2000',102);
+insert into account11 values(50,'saving','2023-01-30','8000',103);
+
+select*from customer11;
+select*from account11;
+
+A)Write a function to display the number of accounts whose opening date is before'30-01-2023'.
+create or replace function tokiyo()returns int as
+$$
+declare
+ c1 int;
+begin
+ select count(accno)into c1 from account11 where opening_date<'2023-01-30';
+return c1;
+end;
+$$
+language plpgsql;
+
+select tokiyo();
+
+B)Write a cursor to display the account details of all customers from 'shirdi'city.
+create or replace function berlin()returns void as
+$$
+declare
+  c account11%rowtype;
+  c1 cursor for select*from account11,customer11 where customer11.cno=account11.cno and city='shirdi';
+begin
+open c1;
+loop
+  fetch c1 into c;
+  exit when not found;
+ raise notice'account no=%',c.accno;
+ raise notice'account type=%',c.acc_type;
+ raise notice'Opening date=%',c.opening_date;
+ raise notice'Balance=%',c.balance;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select berlin();
+
+C)Write a trigger before deleting an account record from account table.Raise a notice and display the message'Account record is being deleted'.
+create or replace function disp()returns trigger as
+$$
+declare
+begin
+raise notice'Account record is being deleted';
+return old;
+end;
+$$
+language plpgsql;
+
+create trigger t1
+before delete on account11
+for each row
+execute procedure disp();
+
+delete from account11 where balance='2000';
