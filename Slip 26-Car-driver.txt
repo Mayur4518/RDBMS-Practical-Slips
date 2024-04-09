@@ -1,0 +1,74 @@
+Slip 26-Car-driver
+create table Car1(c_no int primary key,owner varchar(20),model varchar(20),color varchar(20));
+create table driver1(driver_no int primary key,driver_name varchar(20),licence_no int,age int,salary float);
+create table cd1(c_no int references car1,driver_no int references driver1);
+
+insert into car1 values(101,'om','Ertiga','White');
+insert into car1 values(102,'sai','SUV700','White');
+insert into car1 values(103,'ram','Ertiga','Red');
+
+insert into driver1 values(1,'aman',1111,30,9000);
+insert into driver1 values(2,'sham',2222,40,12000);
+insert into driver1 values(3,'prem',3333,35,15000);
+
+insert into cd1 values(101,1);
+insert into cd1 values(102,2);
+insert into cd1 values(103,3);
+insert into cd1 values(103,1);
+
+select*from car1;
+select*from driver1;
+select*from cd1;
+
+I)Write a function which accepts the driver name and counts the number of cars driven by the driver.
+
+create or replace function disp_car(name driver1.driver_name%type)returns int as
+$$
+declare
+cnt int;
+begin
+ select count(cd1.c_no)into cnt from car1,driver1,cd1 where car1.c_no=cd1.c_no and driver1.driver_no=cd1.driver_no and driver_name=name;
+return cnt;
+end;
+$$
+language plpgsql;
+
+select disp_car('aman');
+
+II)Write a stored function with cursor which accepts the color and prints the names of owners who own a car of that color.
+create or replace function disp_owner(clr car1.color%type)returns void as
+$$
+declare
+o1 car1.owner%type;
+c1 cursor for select owner from car1 where color=clr;
+begin
+open c1;
+ loop
+  fetch c1 into o1;
+  exit when not found;
+ raise notice'%',o1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select disp_owner('Red');
+
+III)Write a trigger before insert/update on driver.Raise exception if driver salary is negative or zero.
+create or replace function Rule()returns trigger as
+$$
+declare
+begin
+if(new.salary<=0)then
+raise exception'salary negative or zero not allowed..!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t1
+before insert or update on driver1
+for each row
+execute procedure Rule();

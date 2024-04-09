@@ -1,0 +1,87 @@
+Slip 33:Car-driver
+create table Car(c_no int primary key,owner varchar(20),model varchar(20),color varchar(20));
+create table driver(driver_no int primary key,driver_name varchar(20),licence_no int,age int,salary float);
+create table cd(c_no int references car,driver_no int references driver);
+
+insert into car values(101,'om','Ertiga','White');
+insert into car values(102,'sai','SUV700','White');
+insert into car values(103,'ram','Ertiga','Red');
+
+insert into driver values(1,'aman',1111,30,9000);
+insert into driver values(2,'sham',2222,40,12000);
+insert into driver values(3,'aba',3333,35,15000);
+
+insert into cd values(101,1);
+insert into cd values(102,2);
+insert into cd values(103,3);
+insert into cd values(103,1);
+
+select*from car;
+select*from driver;
+select*from cd;
+
+I)Write a function which accepts the model name and print the details of all cars of that model.
+ create or replace function disp(name varchar(20))returns void as
+ $$
+ declare
+ c1 car%rowtype;
+ begin
+ select*into c1 from car where model=name;
+ raise notice'Car no=%',c1.c_no;
+ raise notice'Owner=%',c1.owner;
+ raise notice'Model=%',c1.model;
+ raise notice'Color=%',c1.color;
+ end;
+ $$
+ language plpgsql;
+
+select disp('SUV700');
+
+II)Write a trigger before insert/update on driver.Raise exception if driver age is<21.
+create or replace function disp_driver()returns trigger as
+$$
+declare
+begin
+if(new.age<21)then
+raise exception'age less than 21 is not allowed..!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t1
+before insert or update on driver
+for each row
+execute procedure disp_driver();
+
+III)Write a cursor which accepts the driver name and prints the details of all cars that this driver has driven.If the driver name is invalid,print an appropriate message.
+
+create or replace function done(name driver.driver_name%type)returns void as
+$$
+declare
+c int=0;
+c1 car%rowtype;
+c2 cursor for select*from car,driver,cd where car.c_no=cd.c_no and driver.driver_no=cd.driver_no
+and driver_name=name;
+begin
+open c2;
+  loop
+ fetch c2 into c1;
+ exit when not found;
+raise notice'Car no=%',c1.c_no;
+raise notice'Owner=%',c1.owner;
+raise notice'Model=%',c1.model;
+raise notice'Color=%',c1.color;
+c=c+1;
+end loop;
+if(c=0)then
+raise exception'INVALID Driver Name';
+end if;
+close c2;
+end;
+$$
+language plpgsql;
+
+select done('ramesh');
+

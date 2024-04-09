@@ -1,0 +1,87 @@
+Slip 35-Project-Employee
+create table proj35(pno int primary key,pname char(30),ptype char(30),duration int);
+
+create table emp35(empno int primary key,ename char(20),joining_date date);
+
+create table pe35(pno int references proj35,empno int references emp35,start_date date);
+
+insert into proj35 values(101,'Banking','account',100);
+insert into proj35 values(102,'Addmision','educational',150);
+insert into proj35 values(103,'Medical','health',300);
+insert into proj35 values(104,'Hospital','health',200);
+
+insert into emp35 values(1,'om','2020-10-12');
+insert into emp35 values(2,'sai','2022-12-19');
+insert into emp35 values(3,'ram','2023-04-23');
+insert into emp35 values(4,'sham','2020-11-12');
+insert into emp35 values(5,'aman','2019-03-12');
+
+insert into pe35 values(101,1,'2021-08-14');
+insert into pe35 values(104,2,'2021-01-12');
+insert into pe35 values(102,5,'2023-11-22');
+insert into pe35 values(103,4,'2021-12-12');
+insert into pe35 values(104,3,'2022-08-16');
+
+select*from proj35;
+select*from emp35;
+select*from pe35;
+
+I)Write a stored function to accept project type as an input and display all project names of that type.Raise exception if the type is invalid.
+
+create or replace function display(type proj35.ptype%type)returns void as
+$$
+declare
+d1 proj35.pname%type;
+begin
+ select pname into d1 from proj35 where ptype=type;
+if not found then
+raise exception'invalid type';
+else
+raise notice'Project name=%',d1;
+end if;
+end;
+$$
+language plpgsql;
+
+select display('account');
+
+II)Write a trigger which will get fired before insert/update on project table which will check the duiration>0.Display appropriate message.
+create or replace function trig()returns trigger as
+$$
+declare
+begin
+if(new.duration>0)then
+raise notice'duration insert successfully';
+else
+ raise exception'duration is less than 0 is not allowed';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t11
+before insert or update on proj35
+for each row
+execute procedure trig();
+
+III)Write a cursor to accept the project name as an input parameter from the user and display the names of employees working on that project.
+create or replace function datef(name proj35.pname%type)returns void as
+$$
+declare
+e1 char(30);
+c1 cursor for select ename from emp35,proj35,pe35 where proj35.pno=pe35.pno and emp35.empno=pe35.empno and pname=name;
+begin
+open c1;
+loop
+fetch c1 into e1;
+exit when not found;
+raise notice'Emp name=%',e1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select datef('Banking');
+

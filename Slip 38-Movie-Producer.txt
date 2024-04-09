@@ -1,0 +1,81 @@
+Slip 38-Movie-Producer
+create table movie1(m_name varchar(20) primary key,relese_year int,budget money);
+
+create table producer(p_id int primary key,pname varchar(20),p_address varchar(30));
+
+create table mp(m_name varchar(20) references movie1,p_id int references producer);
+
+insert into movie1 values('KGF',2020,'500000');
+insert into movie1 values('KGF 2',2023,'1000000');
+insert into movie1 values('RRR',2023,'700000');
+insert into movie1 values('Bahubali',2016,'500000');
+
+insert into producer values(1,'om','chennai');
+insert into producer values(2,'sai','mumbai');
+insert into producer values(3,'ram','pune');
+insert into producer values(4,'sham','mumbai');
+
+insert into mp values('KGF',2);
+insert into mp values('KGF 2',3);
+insert into mp values('RRR',1);
+insert into mp values('KGF',4);
+insert into mp values('Bahubali',1);
+
+select*from movie1;
+select*from producer;
+select*from mp;
+
+A)Write a stored function which accepts the producer name and prints the number of movies produce by them.
+create or replace function disp_prod(name producer.pname%type)returns void as
+$$
+declare
+ c1 int;
+begin
+ select count(mp.m_name)into c1 from movie1,producer,mp where movie1.m_name=mp.m_name
+   and producer.p_id=mp.p_id and producer.pname=name;
+raise notice'movies produce by producer=%',c1;
+end;
+$$
+language plpgsql;
+
+select disp_prod('ram');
+
+B)Write a stored function using cursor,which will accept the movie name and print the names of all producers who have produced that movie.
+   create or replace function disp_pro(name movie1.m_name%type)returns void as
+  $$
+ declare
+ m1 producer.pname%type;
+ c1 cursor for select pname from producer,movie1,mp where movie1.m_name=mp.m_name and producer.p_id=mp.p_id
+ and m_name=name;
+begin
+ open c1;
+   loop
+   fetch c1 into m1;
+    exit when not found;
+  raise notice'Producer Name=%',m1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select disp_pro('RRR');
+
+C)Write a trigger which will be executed whenever insertion is made to the movie table.If the budget is less than 1,00,000 do not allow the insertion.Give appropriate message.
+
+create or replace function disp_trig()returns trigger as
+$$
+declare
+begin
+ if(new.budget<'100000')then
+raise exception'budget less than 100000 is not allowed..!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t1
+after insert on movie1
+for each row
+execute procedure disp_trig();

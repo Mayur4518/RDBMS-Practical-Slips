@@ -1,0 +1,72 @@
+Slip 31:department-Employee
+create table department31(dno int primary key,dname varchar(20),city varchar(20));
+create table employee31(eno int primary key,ename varchar(20),salary money,dno int references department);
+
+insert into department31 values(101,'computer','pune');
+insert into department31 values(102,'account','mumbai');
+insert into department31 values(103,'sales','pune');
+insert into department31 values(104,'production','shrirampur');
+
+insert into employee31 values(1,'om','5000',101);
+insert into employee31 values(2,'sai','4000',101);
+insert into employee31 values(3,'ram','9000',103);
+insert into employee31 values(4,'sham','9000',102);
+insert into employee31 values(5,'dada','8000',104);
+insert into employee31 values(6,'aba','10000',103);
+
+select*from department31;
+select*from employee31;
+
+I)Write a function to accept department name and return the
+  number of employees of that department.
+
+create or replace function kumar(name department31.dname%type)returns int as
+$$
+declare
+d1 int;
+begin
+select count(ename)into d1 from employee31,department31 where department31.dno=employee31.dno 
+and dname=name;
+return d1;
+end;
+$$
+language plpgsql;
+
+select kumar('computer');
+
+II)Write a cursor which accept salary as input and display the names of employees
+  having salary>that value.
+create or replace function chem(sal employee31.salary%type)returns void as
+$$
+declare
+e1 employee31.ename%type;
+c1 cursor for select ename from employee31 where salary>sal;
+begin
+ open c1;
+  loop
+  fetch c1 into e1;
+  exit when not found;
+ raise notice'employye Nmae=%',e1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select chem('5000');
+
+III)Write a trigger after insert on an employee record.Display appropriate message when the record is inserted.
+create or replace function bio()returns trigger as
+$$
+declare
+begin
+raise notice'Record is inserted..!';
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t11
+after insert on employee31
+for each row
+execute procedure bio();

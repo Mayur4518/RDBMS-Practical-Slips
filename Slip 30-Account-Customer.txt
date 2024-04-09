@@ -1,0 +1,74 @@
+Slip 30:Customer-Account
+create table customer30(cno int primary key,cname varchar(20),city varchar(20));
+
+create table account30(accno int primary key,acc_type varchar(20),opening_date date,balance money,cno int references customer11);
+
+insert into customer30 values(101,'om','shrirampur');
+insert into customer30 values(102,'sai','shrirampur');
+insert into customer30 values(103,'ram','shirdi');
+
+insert into account30 values(10,'saving','2020-12-10','4000',101);
+insert into account30 values(20,'saving','2021-05-18','6000',102);
+insert into account30 values(30,'current','2020-10-19','9000',101);
+insert into account30 values(40,'current ','2019-03-18','2000',102);
+insert into account30 values(50,'saving','2023-01-30','8000',103);
+
+select*from customer30;
+select*from account30;
+
+I)Write a function which accept customer name as input and counts the total number of accounts of 
+that customer
+create or replace function RD(name customer.cname%type)returns int as
+$$
+declare
+ c1 int;
+begin
+ select count(accno)into c1 from account30,customer30 where customer30.cno=account30.cno and cname=name;
+return c1;
+end;
+$$
+language plpgsql;
+
+select RD('om');
+
+II)Write a function using cursor which accepts city name as input and prints the details of all customer in that city.
+
+create or replace function disp_detail(name customer30.city%type)returns void as
+$$
+declare
+d1 customer30%rowtype;
+c1 cursor for select*from customer where city=name;
+begin
+open c1;
+loop
+fetch c1 into d1;
+exit when not found;
+raise notice'Customer no=%',d1.cno;
+raise notice'Customer name=%',d1.cname;
+raise notice'Customer city=%',d1.city;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select disp_detail('shirdi');
+
+III)Write a trigger which does not allow deletion of accounts of type.
+create or replace function lion()returns trigger as
+$$
+declare
+begin
+if(old.acc_type='saving')then
+raise exception'You cannot delete saving account';
+end if;
+return old;
+end;
+$$
+language plpgsql;
+
+create trigger t1
+before delete on account30
+for each row
+execute procedure lion();
+

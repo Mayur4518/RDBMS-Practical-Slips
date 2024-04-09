@@ -1,0 +1,71 @@
+Slip 32-Person-Area
+create table area1(aname varchar(20) primary key,area_type varchar(10) check(area_type in('urban','rural')));
+create table person1(pno int primary key,pname varchar(20),birthdate date,income money,aname varchar(20) references area1);
+
+insert into area1 values('pune','urban');
+insert into area1 values('mumbai','urban');
+insert into area1 values('nashik','rural');
+insert into area1 values('shrirampur','rural');
+
+insert into person1 values(1,'om','2005-12-12','5000','pune');
+insert into person1 values(2,'sai','2004-10-19','7000','mumbai');
+insert into person1 values(3,'ram','2003-05-22','8000','pune');
+insert into person1 values(4,'sham','2005-04-27','9000','mumbai');
+insert into person1 values(5,'Prem','2006-02-22','10000','shrirampur');
+
+select*from area1;
+select*from person1;
+
+I)Write a function to count the people who are born in month june.
+create or replace function birth()returns int as
+$$
+declare
+b1 int;
+begin
+select count(pname)into b1 from person1 where extract(month from birthdate)='12';
+return b1;
+end;
+$$
+language plpgsql;
+
+select birth();
+
+II)Write a trigger which will prevent deleting persons from area 'pune'.
+create or replace function prevent()returns trigger as
+$$
+declare
+begin
+if(old.aname='pune')then
+raise exception'This record cannot be deleted';
+end if;
+return old;
+end;
+$$
+language plpgsql;
+
+create trigger t0
+before delete on person1
+for each row
+execute procedure prevent();
+
+delete from person1 where pno=3;
+
+III)Write a cursor to accept area_type from user and count people living in that area.
+create or replace function public(type area1.area_type%type)returns int as
+$$
+declare
+cnt int;
+c1 cursor for select count(pname)from person1,area1 where area1.aname=person1.aname and area_type=type;
+begin
+ open c1;
+  loop
+  fetch c1 into cnt;
+  exit when not found;
+ return cnt;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select public('urban');
