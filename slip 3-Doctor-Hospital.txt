@@ -1,0 +1,75 @@
+slip-3 Doctor-Hospital
+create table Hospital(h_no int primary key,h_name varchar(20),city varchar(20));
+create table Doctor(d_no int primary key,d_name varchar(20),specialization varchar(20),charges int,h_no int references hospital);
+
+insert into hospital values(1,'unde hospital','Shrirampur');
+insert into hospital values(2,'City hospital','Mumbai');
+insert into hospital values(3,'Kamgar hospital','Shrirampur');
+insert into hospital values(4,'bothe hospital','pune');
+
+insert into doctor values(101,'om','surgen',500,2);
+insert into doctor values(102,'sai','surgen',700,4);
+insert into doctor values(103,'ram','crdiologist',800,2);
+insert into doctor values(104,'sham','Psychiatrists',1000,1);
+insert into doctor values(105,'aman','MBBS',1500,3);
+insert into doctor values(106,'dada','M.D',900,1);
+
+select*from hospital;
+select*from doctor;
+
+A)Wrire a trigger before insert/update on Doctor table.Raise exception if charges are<0.
+create or replace function disp_doct()returns trigger as
+$$
+declare
+begin
+ if(new.charges<=0)then
+ raise exception'Charges less than 0 Not Allowed';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t2
+before insert or update on doctor
+for each row
+execute procedure disp_doct();
+
+ update doctor set charges=-800 where d_name='om';
+
+B)Write a function which will accept the name of the doctor and print the hospital details that the doctor is visiting.
+create or replace function disp_doct1(dname doctor.d_name%type)returns void as
+$$
+declare
+ h1 hospital%rowtype;
+begin
+ select hospital.*into h1 from hospital,doctor where hospital.h_no=doctor.h_no and d_name=dname;
+ raise notice'Hospital No=%',h1.h_no;
+ raise notice'Hospital Name=%',h1.h_name;
+ raise notice'City=%',h1.city;
+end;
+$$
+language plpgsql;
+
+select disp_doct1('ram');
+
+C)Write a function using cursor to accept the name of the city name and print the names of all hospitals in that city. 
+create or replace function disp_hospital(city1 hospital.city%type)returns void as
+$$
+declare
+ h1 hospital.city%type;
+ c1 cursor for select h_name from hospital where city=city1;
+begin
+open c1;
+ loop
+ fetch c1 into h1;
+ exit when not found;
+raise notice'Hospital Name=%',h1;
+end loop;
+close c1;
+end;
+$$ 
+language plpgsql;
+
+select disp_hospital('mumbai');
+
